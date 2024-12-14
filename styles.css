@@ -7,11 +7,13 @@
 body {
     font-family: 'Poppins', sans-serif;
     line-height: 1.6;
-    color: #333;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    transition: background-color 0.3s, color 0.3s;
 }
 
 header {
-    background-color: #ffffff;
+    background-color: var(--header-bg);
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     position: fixed;
     width: 100%;
@@ -31,7 +33,7 @@ nav {
 .logo {
     font-size: 1.5rem;
     font-weight: 600;
-    color: #7289da;
+    color: var(--primary-color);
 }
 
 nav ul {
@@ -42,7 +44,7 @@ nav ul {
 
 nav a {
     text-decoration: none;
-    color: #333;
+    color: var(--text-color);
     font-weight: 500;
 }
 
@@ -51,7 +53,7 @@ main {
 }
 
 .hero {
-    background: linear-gradient(135deg, #7289da, #4e5d94);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     text-align: center;
     padding: 4rem 2rem;
@@ -82,6 +84,22 @@ main {
     transform: translateY(-3px);
 }
 
+.button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.cta-button.telegram {
+    background-color: #229ED9;
+    color: white;
+}
+
+.cta-button.telegram:hover {
+    background-color: #1e8bc3;
+}
+
 .features, .about {
     padding: 4rem 2rem;
     max-width: 1200px;
@@ -96,7 +114,7 @@ main {
 }
 
 .feature-card {
-    background: #f5f5f5;
+    background: var(--card-bg);
     padding: 2rem;
     border-radius: 10px;
     text-align: center;
@@ -109,7 +127,7 @@ h2 {
 }
 
 footer {
-    background-color: #f5f5f5;
+    background-color: var(--footer-bg);
     padding: 2rem;
     margin-top: 4rem;
 }
@@ -138,4 +156,43 @@ footer {
     .hero h1 {
         font-size: 2rem;
     }
+} 
+
+/* Theme Toggle Button */
+.nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color);
+}
+
+.theme-toggle svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.theme-toggle .moon-icon {
+    display: none;
+}
+
+[data-theme="dark"] .sun-icon {
+    display: none;
+}
+
+[data-theme="dark"] .moon-icon {
+    display: block;
 } 

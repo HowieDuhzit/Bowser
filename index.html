@@ -9,6 +9,26 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        :root[data-theme="light"] {
+            --primary-color: #8B0000;
+            --secondary-color: #DAA520;
+            --bg-color: #F5F5DC;
+            --text-color: #2C1810;
+            --card-bg: #FFF8DC;
+            --header-bg: #FFF8DC;
+            --footer-bg: #DEB887;
+        }
+        
+        :root[data-theme="dark"] {
+            --primary-color: #FF4500;
+            --secondary-color: #FFD700;
+            --bg-color: #1A0F0F;
+            --text-color: #FFF8DC;
+            --card-bg: #2C1810;
+            --header-bg: #2C1810;
+            --footer-bg: #1A0F0F;
+        }
+        
         .mascot-image {
             width: 150px;
             height: auto;
@@ -32,12 +52,19 @@
                 <img src="bowser-icon.png" alt="Bowser AI Icon">
                 <div class="logo">Bowser AI</div>
             </div>
-            <ul>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="tos.html">Terms of Service</a></li>
-                <li><a href="privacy.html">Privacy Policy</a></li>
-            </ul>
+            <div class="nav-controls">
+                <button id="theme-toggle" class="theme-toggle">
+                    <svg class="sun-icon" viewBox="0 0 24 24"><path d="M12 17.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zm0 1.5a7 7 0 1 1 0-14 7 7 0 0 1 0 14zm0-16a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1zm0 15a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1z"/></svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+                </button>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#token">Token</a></li>
+                    <li><a href="tos.html">Terms of Service</a></li>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                </ul>
+            </div>
         </nav>
     </header>
 
@@ -46,7 +73,10 @@
             <img src="bowser-icon.png" alt="Bowser AI Mascot" class="mascot-image">
             <h1>Meet Bowser AI</h1>
             <p>Your intelligent Discord companion for voice and text interactions</p>
-            <a href="https://discord.com/oauth2/authorize?client_id=1128696854696173719&permissions=515433295168&scope=bot%20applications.commands" class="cta-button">Add to Discord</a>
+            <div class="button-group">
+                <a href="https://discord.com/oauth2/authorize?client_id=1128696854696173719&permissions=515433295168&scope=bot%20applications.commands" class="cta-button">Add to Discord</a>
+                <a href="https://t.me/DragonWifBeard" class="cta-button telegram">Join Telegram</a>
+            </div>
         </section>
 
         <section id="features" class="features">
@@ -75,6 +105,41 @@
             <h2>About Bowser AI</h2>
             <p>Bowser is an advanced AI agent designed to enhance your Discord server experience. Whether through voice or text, Bowser can engage in natural conversations, assist with tasks, and make your server more interactive and fun.</p>
         </section>
+
+        <section id="token" class="token">
+            <h2>DragonWifBeard Token</h2>
+            <div class="chart-container">
+                <style>
+                    #dexscreener-embed{
+                        position:relative;
+                        width:100%;
+                        padding-bottom:65%;
+                        max-width: 1200px;
+                        margin: 0 auto;
+                    }
+                    @media(min-width:1400px){
+                        #dexscreener-embed{
+                            padding-bottom:45%;
+                        }
+                    }
+                    #dexscreener-embed iframe{
+                        position:absolute;
+                        width:100%;
+                        height:100%;
+                        top:0;
+                        left:0;
+                        border:0;
+                        border-radius: 10px;
+                    }
+                    .chart-container {
+                        padding: 0 2rem;
+                    }
+                </style>
+                <div id="dexscreener-embed">
+                    <iframe src="https://dexscreener.com/solana/8YQxJShh7qNeGa9o1twwjehREYdhztdr1U6Q9ukvCQBZ?embed=1&loadChartSettings=0&tabs=0&chartLeftToolbar=0&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15"></iframe>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer>
@@ -86,5 +151,22 @@
             <p>&copy; 2024 Bowser AI. All rights reserved.</p>
         </div>
     </footer>
+    <script>
+        // Set initial theme
+        document.documentElement.setAttribute('data-theme', 'dark');
+        
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+        
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
 </body>
 </html> 
