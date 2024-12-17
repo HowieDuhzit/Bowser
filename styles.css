@@ -196,3 +196,20 @@ footer {
 [data-theme="dark"] .moon-icon {
     display: block;
 } 
+
+.livestream {
+    padding: 4rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.twitter-embed-container {
+    display: flex;
+    justify-content: center;
+    margin: 2rem auto;
+    max-width: 560px;
+}
+
+.twitter-embed-container iframe {
+    border-radius: 10px;
+} 
