@@ -168,6 +168,9 @@
             <p>&copy; 2024 Bowser AI. All rights reserved.</p>
         </div>
     </footer>
+    <audio id="background-music" loop autoplay style="display: none;">
+        <source src="DFTB.mp3" type="audio/mpeg">
+    </audio>
     <script>
         // Set initial theme
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -184,6 +187,20 @@
         // Check for saved theme preference
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        // Start playing background music (needed for autoplay policies)
+        document.addEventListener('click', function() {
+            const audio = document.getElementById('background-music');
+            audio.play();
+        }, { once: true });
+        
+        // Auto-pause audio when user leaves the page
+        document.addEventListener('visibilitychange', function() {
+            const audio = document.getElementById('background-music');
+            if (document.hidden) {
+                audio.pause();
+            }
+        });
     </script>
 </body>
 </html> 
