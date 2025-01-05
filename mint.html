@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script src="https://unpkg.com/@solana/spl-token@0.3.8/lib/index.iife.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@metaplex-foundation/js@0.19.4/dist/browser-global.min.js"></script>
     <style>
         .mint-container {
             max-width: 800px;
@@ -107,20 +109,50 @@
 
     <script>
         let walletAddress = null;
+        let connection = null;
+        const NETWORK = 'devnet'; // or 'mainnet-beta' for production
+        const MINT_PRICE = 0.1; // SOL
+        const NFT_PROGRAM_ID = 'YOUR_NFT_PROGRAM_ID'; // Replace with your program ID
+        
+        async function initializeConnection() {
+            const endpoint = NETWORK === 'devnet' 
+                ? 'https://api.devnet.solana.com' 
+                : 'https://api.mainnet-beta.solana.com';
+            connection = new solanaWeb3.Connection(endpoint);
+        }
 
         async function connectWallet() {
             try {
-                if (!window.solana || !window.solana.isPhantom) {
+                // Check if Phantom is installed
+                const { solana } = window;
+                
+                if (!solana?.isPhantom) {
                     alert('Phantom wallet is not installed. Please install it first.');
                     window.open('https://phantom.app/', '_blank');
                     return;
                 }
 
-                const response = await window.solana.connect();
-                walletAddress = response.publicKey.toString();
-                document.getElementById('wallet-status').textContent = 
-                    `Connected: ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+                // Connect to wallet
+                await solana.connect();
+                
+                if (!connection) {
+                    await initializeConnection();
+                }
+
+                walletAddress = solana.publicKey.toString();
+                
+                // Update UI
+                const walletStatus = document.getElementById('wallet-status');
+                walletStatus.textContent = `Connected: ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
                 document.getElementById('mint-button').disabled = false;
+
+                // Add disconnect handler
+                solana.on('disconnect', () => {
+                    walletAddress = null;
+                    walletStatus.textContent = 'Wallet not connected';
+                    document.getElementById('mint-button').disabled = true;
+                });
+
             } catch (err) {
                 console.error(err);
                 alert('Failed to connect wallet: ' + err.message);
@@ -134,16 +166,72 @@
                     return;
                 }
 
-                // Here you would implement the actual minting logic
-                // This would involve creating and sending a transaction to your NFT program
-                alert('NFT minting functionality will be implemented here');
+                const { solana } = window;
                 
+                // Create the token metadata
+                const metadata = {
+                    name: "Bowser AI NFT",
+                    symbol: "BWSR",
+                    description: "Official Bowser AI NFT Collection",
+                    image: "https://your-metadata-uri.com/nft-image.png", // Replace with your image URI
+                    attributes: [
+                        {
+                            trait_type: "Generation",
+                            value: "1"
+                        }
+                    ]
+                };
+
+                // Create transaction
+                const transaction = new solanaWeb3.Transaction();
+                
+                // Add mint instruction
+                const mintInstruction = new solanaWeb3.TransactionInstruction({
+                    programId: new solanaWeb3.PublicKey(NFT_PROGRAM_ID),
+                    keys: [
+                        {
+                            pubkey: solana.publicKey,
+                            isSigner: true,
+                            isWritable: true,
+                        },
+                        // Add other necessary account keys based on your program
+                    ],
+                    data: Buffer.from(JSON.stringify(metadata)),
+                });
+
+                // Add SOL transfer instruction for payment
+                const transferInstruction = solanaWeb3.SystemProgram.transfer({
+                    fromPubkey: solana.publicKey,
+                    toPubkey: new solanaWeb3.PublicKey('YOUR_TREASURY_WALLET'), // Replace with your treasury wallet
+                    lamports: MINT_PRICE * solanaWeb3.LAMPORTS_PER_SOL,
+                });
+
+                transaction.add(transferInstruction, mintInstruction);
+
+                // Get latest blockhash
+                const { blockhash } = await connection.getLatestBlockhash();
+                transaction.recentBlockhash = blockhash;
+                transaction.feePayer = solana.publicKey;
+
+                // Sign and send transaction
+                const signed = await solana.signTransaction(transaction);
+                const signature = await connection.sendRawTransaction(signed.serialize());
+                
+                // Wait for confirmation
+                await connection.confirmTransaction(signature);
+
+                alert('NFT minted successfully!');
+
             } catch (err) {
                 console.error(err);
                 alert('Failed to mint NFT: ' + err.message);
             }
         }
 
+        // Initialize connection when page loads
+        initializeConnection();
+
+        // Add event listeners
         document.getElementById('connect-wallet').addEventListener('click', connectWallet);
         document.getElementById('mint-button').addEventListener('click', mintNFT);
     </script>
