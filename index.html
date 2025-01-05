@@ -8,42 +8,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root[data-theme="light"] {
-            --primary-color: #8B0000;
-            --secondary-color: #DAA520;
-            --bg-color: #F5F5DC;
-            --text-color: #2C1810;
-            --card-bg: #FFF8DC;
-            --header-bg: #FFF8DC;
-            --footer-bg: #DEB887;
-        }
-        
-        :root[data-theme="dark"] {
-            --primary-color: #FF4500;
-            --secondary-color: #FFD700;
-            --bg-color: #1A0F0F;
-            --text-color: #FFF8DC;
-            --card-bg: #2C1810;
-            --header-bg: #2C1810;
-            --footer-bg: #1A0F0F;
-        }
-        
-        .mascot-image {
-            width: 150px;
-            height: auto;
-            margin-bottom: 1rem;
-        }
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .logo-container img {
-            width: 40px;
-            height: auto;
-        }
-    </style>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script>
+        // Load environment variables
+        const loadEnv = async () => {
+            try {
+                const response = await fetch('/.env');
+                const text = await response.text();
+                const env = {};
+                
+                text.split('\n').forEach(line => {
+                    const [key, value] = line.split('=');
+                    if (key && value) {
+                        env[key.trim()] = value.trim();
+                    }
+                });
+                
+                return env;
+            } catch (error) {
+                console.error('Error loading environment variables:', error);
+                return {};
+            }
+        };
+    </script>
 </head>
 <body>
     <header>
@@ -57,15 +44,12 @@
                     <svg class="sun-icon" viewBox="0 0 24 24"><path d="M12 17.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zm0 1.5a7 7 0 1 1 0-14 7 7 0 0 1 0 14zm0-16a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1zm0 15a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1z"/></svg>
                     <svg class="moon-icon" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
                 </button>
-                <ul>
-                    <li><a href="#features">Features</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#livestream">Live Stream</a></li>
-                    <li><a href="#token">Token</a></li>
-                    <li><a href="mint.html">Mint NFT</a></li>
-                    <li><a href="tos.html">Terms of Service</a></li>
-                    <li><a href="privacy.html">Privacy Policy</a></li>
-                </ul>
+                <div class="wallet-dropdown">
+                    <button id="wallet-connect" class="wallet-connect">Connect Wallet</button>
+                    <div id="wallet-dropdown" class="dropdown-content">
+                        <div id="token-balance" class="token-balance">Loading balance...</div>
+                    </div>
+                </div>
             </div>
         </nav>
     </header>
@@ -202,6 +186,189 @@
                 audio.pause();
             }
         });
+        
+        // Phantom wallet integration
+        let walletAddress = null;
+        const TOKEN_ADDRESS = '3WcuajU3xSKF1xyg8CB3XNsDDkLUnqepXJ8ETqVTpump';
+        
+        // Use Helius RPC service
+        let RPC_ENDPOINT = '';
+        let isEndpointReady = false;
+        
+        // Initialize RPC endpoint with API key
+        (async () => {
+            try {
+                const env = await loadEnv();
+                RPC_ENDPOINT = `https://rpc.helius.xyz/?api-key=${env.HELIUS_API_KEY}`;
+                isEndpointReady = true;
+                
+                // If wallet was previously connected, update the balance
+                const wasConnected = localStorage.getItem('walletConnected') === 'true';
+                if (wasConnected && walletAddress) {
+                    updateTokenBalance();
+                }
+            } catch (error) {
+                console.error('Error initializing RPC endpoint:', error);
+            }
+        })();
+        
+        async function getTokenBalance(walletAddress) {
+            if (!isEndpointReady) {
+                console.log('Waiting for RPC endpoint to initialize...');
+                return 'Loading...';
+            }
+            
+            try {
+                const connection = new solanaWeb3.Connection(RPC_ENDPOINT);
+                const publicKey = new solanaWeb3.PublicKey(walletAddress);
+                
+                // First, get all token accounts
+                const response = await fetch(RPC_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 'my-id',
+                        method: 'getTokenAccountsByOwner',
+                        params: [
+                            walletAddress,
+                            {
+                                mint: TOKEN_ADDRESS
+                            },
+                            {
+                                encoding: 'jsonParsed'
+                            }
+                        ],
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.result && data.result.value.length > 0) {
+                    const balance = data.result.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+                    return balance.toLocaleString();
+                }
+                
+                return '0';
+            } catch (error) {
+                console.error('Error fetching token balance:', error);
+                return 'Error loading balance';
+            }
+        }
+        
+        async function updateTokenBalance() {
+            if (!walletAddress) return;
+            
+            const balanceElement = document.getElementById('token-balance');
+            balanceElement.textContent = 'Loading balance...';
+            balanceElement.classList.add('token-balance-loading');
+            
+            // Wait for endpoint to be ready if necessary
+            while (!isEndpointReady) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            const balance = await getTokenBalance(walletAddress);
+            balanceElement.textContent = `Balance: ${balance} DWB`;
+            balanceElement.classList.remove('token-balance-loading');
+        }
+        
+        const connectWallet = async () => {
+            try {
+                const { solana } = window;
+                
+                if (!solana?.isPhantom) {
+                    alert('Please install Phantom wallet!');
+                    window.open('https://phantom.app/', '_blank');
+                    return;
+                }
+                
+                const response = await solana.connect();
+                walletAddress = response.publicKey.toString();
+                const walletButton = document.getElementById('wallet-connect');
+                walletButton.textContent = `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+                walletButton.classList.add('connected');
+                
+                // Check if this is a new user
+                try {
+                    const profileResponse = await fetch(`/api/profile/${walletAddress}`);
+                    if (!profileResponse.ok) {
+                        // New user - redirect to profile page
+                        localStorage.setItem('walletConnected', 'true');
+                        localStorage.setItem('walletAddress', walletAddress);
+                        window.location.href = 'profile.html';
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Error checking profile:', error);
+                }
+                
+                // Existing user - update token balance
+                updateTokenBalance();
+                
+                // Save connection status
+                localStorage.setItem('walletConnected', 'true');
+                localStorage.setItem('walletAddress', walletAddress);
+            } catch (error) {
+                console.error(error);
+                alert('Failed to connect wallet');
+            }
+        };
+        
+        // Toggle dropdown
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('wallet-dropdown');
+            const walletButton = document.getElementById('wallet-connect');
+            
+            if (walletAddress && event.target === walletButton) {
+                dropdown.classList.toggle('show');
+                if (dropdown.classList.contains('show')) {
+                    updateTokenBalance();
+                }
+            } else if (!event.target.closest('.wallet-dropdown')) {
+                dropdown.classList.remove('show');
+            }
+        });
+        
+        // Check if wallet was previously connected
+        window.addEventListener('load', async () => {
+            const wasConnected = localStorage.getItem('walletConnected') === 'true';
+            if (wasConnected) {
+                const savedAddress = localStorage.getItem('walletAddress');
+                if (savedAddress) {
+                    walletAddress = savedAddress;
+                    const walletButton = document.getElementById('wallet-connect');
+                    walletButton.textContent = `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+                    walletButton.classList.add('connected');
+                }
+            }
+        });
+        
+        // Add wallet connect button listener
+        document.getElementById('wallet-connect').addEventListener('click', connectWallet);
+        
+        // Handle wallet change events
+        if (window.solana) {
+            window.solana.on('disconnect', () => {
+                walletAddress = null;
+                const walletButton = document.getElementById('wallet-connect');
+                walletButton.textContent = 'Connect Wallet';
+                walletButton.classList.remove('connected');
+                localStorage.removeItem('walletConnected');
+                localStorage.removeItem('walletAddress');
+            });
+            
+            window.solana.on('accountChanged', async (publicKey) => {
+                if (publicKey) {
+                    walletAddress = publicKey.toString();
+                    const walletButton = document.getElementById('wallet-connect');
+                    walletButton.textContent = `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+                    localStorage.setItem('walletAddress', walletAddress);
+                }
+            });
+        }
     </script>
 </body>
 </html> 

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Bowser AI</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo-container">
+                <img src="bowser-icon.png" alt="Bowser AI Icon">
+                <div class="logo">Bowser AI</div>
+            </div>
+            <div class="nav-controls">
+                <button id="theme-toggle" class="theme-toggle">
+                    <svg class="sun-icon" viewBox="0 0 24 24"><path d="M12 17.5a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zm0 1.5a7 7 0 1 1 0-14 7 7 0 0 1 0 14zm0-16a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1zm0 15a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1z"/></svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+                </button>
+                <div class="wallet-dropdown">
+                    <button id="wallet-connect" class="wallet-connect">Connect Wallet</button>
+                    <div id="wallet-dropdown" class="dropdown-content">
+                        <div id="token-balance" class="token-balance">Loading balance...</div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="profile-container">
+            <h1>Edit Profile</h1>
+            <form class="profile-form" id="profile-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bio">Bio</label>
+                    <textarea id="bio" name="bio" rows="4"></textarea>
+                </div>
+
+                <div class="linked-wallets">
+                    <h2>Linked Wallets</h2>
+                    <ul class="wallet-list" id="wallet-list">
+                        <!-- Wallet items will be added here dynamically -->
+                    </ul>
+                    <button type="button" class="add-wallet-btn" id="add-wallet">Add Wallet</button>
+                </div>
+
+                <button type="submit" class="save-profile-btn">Save Profile</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // Theme handling code (same as index.html)
+        document.documentElement.setAttribute('data-theme', 'dark');
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // Profile handling
+        let linkedWallets = [];
+        
+        async function loadProfile() {
+            const mainWallet = localStorage.getItem('walletAddress');
+            if (!mainWallet) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/profile/${mainWallet}`);
+                if (response.ok) {
+                    const profile = await response.json();
+                    document.getElementById('username').value = profile.username || '';
+                    document.getElementById('bio').value = profile.bio || '';
+                    linkedWallets = profile.linkedWallets || [mainWallet];
+                    updateWalletList();
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        function updateWalletList() {
+            const walletList = document.getElementById('wallet-list');
+            walletList.innerHTML = '';
+            
+            linkedWallets.forEach((wallet, index) => {
+                const li = document.createElement('li');
+                li.className = 'wallet-item';
+                li.innerHTML = `
+                    <span>${wallet.slice(0, 4)}...${wallet.slice(-4)}</span>
+                    ${index > 0 ? `<button type="button" onclick="removeWallet('${wallet}')">Remove</button>` : ''}
+                `;
+                walletList.appendChild(li);
+            });
+        }
+
+        async function addWallet() {
+            try {
+                const { solana } = window;
+                if (!solana?.isPhantom) {
+                    alert('Please install Phantom wallet!');
+                    return;
+                }
+
+                const response = await solana.connect();
+                const newWallet = response.publicKey.toString();
+                
+                if (!linkedWallets.includes(newWallet)) {
+                    linkedWallets.push(newWallet);
+                    updateWalletList();
+                }
+            } catch (error) {
+                console.error('Error adding wallet:', error);
+                alert('Failed to add wallet');
+            }
+        }
+
+        function removeWallet(wallet) {
+            linkedWallets = linkedWallets.filter(w => w !== wallet);
+            updateWalletList();
+        }
+
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const mainWallet = localStorage.getItem('walletAddress');
+            const profile = {
+                mainWallet,
+                username: document.getElementById('username').value,
+                bio: document.getElementById('bio').value,
+                linkedWallets
+            };
+
+            try {
+                const response = await fetch('/api/profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(profile)
+                });
+
+                if (response.ok) {
+                    alert('Profile saved successfully!');
+                    window.location.href = 'index.html';
+                } else {
+                    throw new Error('Failed to save profile');
+                }
+            } catch (error) {
+                console.error('Error saving profile:', error);
+                alert('Failed to save profile');
+            }
+        });
+
+        document.getElementById('add-wallet').addEventListener('click', addWallet);
+
+        // Load profile on page load
+        loadProfile();
+    </script>
+</body>
+</html> 
