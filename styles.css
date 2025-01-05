@@ -149,6 +149,32 @@ nav {
     font-style: italic;
 }
 
+.dropdown-content .dropdown-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--secondary-color);
+}
+
+.dropdown-content .dropdown-button {
+    background: var(--secondary-color);
+    color: var(--text-color);
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.2s;
+    text-decoration: none;
+    text-align: center;
+}
+
+.dropdown-content .dropdown-button:hover {
+    opacity: 0.9;
+}
+
 /* Main Content */
 main {
     flex: 1;
