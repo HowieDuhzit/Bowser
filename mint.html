@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mint NFT - Bowser AI</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <style>
+        .mint-container {
+            max-width: 800px;
+            margin: 100px auto;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .wallet-section {
+            margin: 2rem 0;
+        }
+
+        .mint-button, .connect-wallet-button {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin: 1rem 0;
+            transition: transform 0.3s ease;
+        }
+
+        .mint-button:hover, .connect-wallet-button:hover {
+            transform: translateY(-3px);
+        }
+
+        .mint-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .nft-preview {
+            max-width: 300px;
+            margin: 2rem auto;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .nft-preview img {
+            width: 100%;
+            height: auto;
+        }
+
+        .wallet-status {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 10px;
+            background: var(--card-bg);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo-container">
+                <img src="bowser-icon.png" alt="Bowser AI Icon">
+                <div class="logo">Bowser AI</div>
+            </div>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="tos.html">Terms of Service</a></li>
+                <li><a href="privacy.html">Privacy Policy</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="mint-container">
+        <h1>Mint Your Bowser NFT</h1>
+        
+        <div class="nft-preview">
+            <img src="bowser-nft-preview.png" alt="Bowser NFT Preview">
+        </div>
+
+        <div class="wallet-section">
+            <div id="wallet-status" class="wallet-status">
+                Wallet not connected
+            </div>
+            <button id="connect-wallet" class="connect-wallet-button">Connect Phantom Wallet</button>
+        </div>
+
+        <div class="mint-section">
+            <button id="mint-button" class="mint-button" disabled>Mint NFT (0.1 SOL)</button>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="tos.html">Terms of Service</a>
+                <a href="privacy.html">Privacy Policy</a>
+            </div>
+            <p>&copy; 2024 Bowser AI. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        let walletAddress = null;
+
+        async function connectWallet() {
+            try {
+                if (!window.solana || !window.solana.isPhantom) {
+                    alert('Phantom wallet is not installed. Please install it first.');
+                    window.open('https://phantom.app/', '_blank');
+                    return;
+                }
+
+                const response = await window.solana.connect();
+                walletAddress = response.publicKey.toString();
+                document.getElementById('wallet-status').textContent = 
+                    `Connected: ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
+                document.getElementById('mint-button').disabled = false;
+            } catch (err) {
+                console.error(err);
+                alert('Failed to connect wallet: ' + err.message);
+            }
+        }
+
+        async function mintNFT() {
+            try {
+                if (!walletAddress) {
+                    alert('Please connect your wallet first');
+                    return;
+                }
+
+                // Here you would implement the actual minting logic
+                // This would involve creating and sending a transaction to your NFT program
+                alert('NFT minting functionality will be implemented here');
+                
+            } catch (err) {
+                console.error(err);
+                alert('Failed to mint NFT: ' + err.message);
+            }
+        }
+
+        document.getElementById('connect-wallet').addEventListener('click', connectWallet);
+        document.getElementById('mint-button').addEventListener('click', mintNFT);
+    </script>
+</body>
+</html> 
